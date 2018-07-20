@@ -11,6 +11,7 @@ const patternEngines = require("patternlab-node/core/lib/pattern_engines");
 const merge = require("webpack-merge");
 const customization = require(`${plConfig.paths.source.app}/webpack.app.js`);
 const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = env => {
   const { ifProduction, ifDevelopment } = getIfUtils(env);
@@ -77,12 +78,12 @@ module.exports = env => {
             from: "./*",
             to: resolve(plConfig.paths.public.fonts)
           },
-          {
-            // Copy all css from source to public
-            context: resolve(plConfig.paths.source.css),
-            from: "./*.css",
-            to: resolve(plConfig.paths.public.css)
-          },
+          // {
+          //   // Copy all css from source to public
+          //   context: resolve(plConfig.paths.source.css),
+          //   from: "./*.css",
+          //   to: resolve(plConfig.paths.public.css)
+          // },
           {
             // Styleguide Copy everything but css
             context: resolve(plConfig.paths.source.styleguide),
@@ -98,6 +99,12 @@ module.exports = env => {
             flatten: true
           }
         ]),
+        new MiniCssExtractPlugin({
+          // Options similar to the same options in webpackOptions.output
+          // both options are optional
+          filename: ifDevelopment ? '[name].css' : '[name].[hash].css',
+          chunkFilename: ifDevelopment ? '[id].css' : '[id].[hash].css',
+        }),
         ifDevelopment(
           new EventHooksPlugin({
             afterEmit: function(compilation) {
@@ -169,6 +176,15 @@ module.exports = env => {
                 }
               }
             ]
+          },
+          {
+            test: /\.(sa|sc)ss$/,
+            use: [
+              ifDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
+              'css-loader',
+              // 'postcss-loader',
+              'sass-loader',
+            ],
           }
         ]
       }
